@@ -1,1 +1,8 @@
+Modularity in software design is the practice of breaking down a large software system into smaller, independent, self-contained, and interchangeable components called modules.
+Each module encapsulates a specific piece of functionality or a set of related concerns, interacting with other modules through well-defined interfaces.
+Think of it like building with LEGOs: each brick is a module. The bricks are distinct, have a clear purpose, and connect to each other in standardized ways, allowing you to build complex structures.
+
+
+
+
 
