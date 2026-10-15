@@ -1,11 +1,17 @@
 
 # TCP vs IP (TCP/IP)
 
+TCP and IP are two different protocols that work together to enable communication between applications across a network.
 
+## 1. Protocol Relationship
+
+```mermaid
 flowchart TD
     HTTP["HTTP/1.1 and HTTP/2"] --> TCP["TCP"]
     APP["Custom Socket Application"] --> TCP
-    HTTP3["HTTP/3"] --> QUIC["QUIC"] --> UDP["UDP"]
+    HTTP3["HTTP/3"] --> QUIC["QUIC"]
+    QUIC --> UDP["UDP"]
+
     TCP --> IP["IP - IPv4 / IPv6"]
     UDP --> IP
     IP --> NETWORK["Network"]
@@ -13,10 +19,11 @@ flowchart TD
     style TCP fill:#d1fae5,color:#065f46,stroke:#34d399
     style UDP fill:#fef3c7,color:#92400e,stroke:#f59e0b
     style IP fill:#f3e8ff,color:#6b21a8,stroke:#c084fc
+```
 
-TCP and IP are two different protocols that work together to enable communication between applications across a network.
+**Important:** TCP uses IP, but IP does not require TCP. IP can also carry UDP and other protocols.
 
-## 1. IP vs TCP
+## 2. IP vs TCP
 
 | Feature | IP (Internet Protocol) | TCP (Transmission Control Protocol) |
 |---|---|---|
@@ -28,7 +35,7 @@ TCP and IP are two different protocols that work together to enable communicatio
 | Example | `192.168.1.10` | Port `5000` |
 | Java | `InetAddress` | `Socket`, `ServerSocket` |
 
-## 2. How TCP/IP Works
+## 3. How TCP/IP Works
 
 ```text
 Client Application
@@ -58,8 +65,9 @@ Server (IP → TCP → Application)
 - TCP handles reliability; IP handles addressing and routing.
 - The operating system implements TCP/IP, so applications don't need to manually construct TCP or IP packets.
 - IP can also carry other protocols, such as UDP.
+- HTTP/1.1 and HTTP/2 use TCP, while HTTP/3 uses QUIC over UDP.
 
-## 3. Where Do We See TCP/IP in Java?
+## 4. Where Do We See TCP/IP in Java?
 
 | Java Code | What it represents |
 |---|---|
@@ -70,9 +78,9 @@ Server (IP → TCP → Application)
 | `socket.getInputStream()` | Reads bytes received through TCP |
 | `socket.getOutputStream()` | Writes bytes to be sent through TCP |
 
-**Remember:** `Socket` uses TCP, while the operating system handles IP underneath. The application generally doesn't need to implement either protocol.
+**Remember:** Java's `Socket` uses TCP, while the operating system handles IP underneath. The application generally doesn't need to implement either protocol.
 
-## 4. Code Example
+## 5. Code Example
 
 [Java TCP Client–Server Example](./tcp-client-server.md)
 
