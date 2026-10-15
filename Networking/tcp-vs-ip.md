@@ -1,6 +1,19 @@
 
 # TCP vs IP (TCP/IP)
 
+
+flowchart TD
+    HTTP["HTTP/1.1 and HTTP/2"] --> TCP["TCP"]
+    APP["Custom Socket Application"] --> TCP
+    HTTP3["HTTP/3"] --> QUIC["QUIC"] --> UDP["UDP"]
+    TCP --> IP["IP - IPv4 / IPv6"]
+    UDP --> IP
+    IP --> NETWORK["Network"]
+
+    style TCP fill:#d1fae5,color:#065f46,stroke:#34d399
+    style UDP fill:#fef3c7,color:#92400e,stroke:#f59e0b
+    style IP fill:#f3e8ff,color:#6b21a8,stroke:#c084fc
+
 TCP and IP are two different protocols that work together to enable communication between applications across a network.
 
 ## 1. IP vs TCP
