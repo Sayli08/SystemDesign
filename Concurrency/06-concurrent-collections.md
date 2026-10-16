@@ -3,47 +3,55 @@
 
 [Home](README.md) | [Java Code](code/ConcurrentCollectionsDemo.java)
 
-## 1. Java Concurrency Data Structures
+## 1. Why Concurrent Collections?
 
-| Requirement | Java API | Operation |
+When multiple threads modify a shared collection, ordinary collections such as HashMap and HashSet are not automatically thread-safe.
+
+Java provides concurrent collections that support safe concurrent operations.
+
+## 2. Common APIs
+
+| Requirement | Java API | Useful Operation |
 |---|---|---|
-| Atomic counter | AtomicInteger | incrementAndGet() |
-| Thread-safe map | ConcurrentHashMap | putIfAbsent() |
-| Thread-safe set | ConcurrentHashMap.newKeySet() | add() |
-| Thread-safe queue | BlockingQueue | put(), take() |
-| Wait for completion events | CountDownLatch | await(), countDown() |
-| Limit concurrent access | Semaphore | acquire(), release() |
-| Read-heavy concurrent list | CopyOnWriteArrayList | add(), get() |
+| Shared counter | AtomicInteger | incrementAndGet() |
+| Shared map | ConcurrentHashMap | putIfAbsent() |
+| Shared set | ConcurrentHashMap.newKeySet() | add() |
+| Producer–Consumer | BlockingQueue | put(), take() |
+| Concurrent nonblocking queue | ConcurrentLinkedQueue | offer(), poll() |
+| Completion coordination | CountDownLatch | await(), countDown() |
+| Limited concurrency | Semaphore | acquire(), release() |
+| Read-heavy shared list | CopyOnWriteArrayList | add(), get() |
 
-## 2. HashMap vs ConcurrentHashMap
+## 3. HashMap vs ConcurrentHashMap
 
 | HashMap | ConcurrentHashMap |
 |---|---|
-| Not thread-safe | Thread-safe operations |
-| Single-threaded/external lock | Concurrent access |
-| No atomic putIfAbsent guarantee | Atomic putIfAbsent |
+| Not thread-safe | Thread-safe individual operations |
+| Suitable for single-threaded use | Supports concurrent access |
+| External coordination needed for shared mutations | Atomic methods such as putIfAbsent() |
+| Allows null keys and values | Does not allow null keys or values |
 
 ```java
 Map<String, Integer> map =
     new ConcurrentHashMap<>();
 
-map.putIfAbsent("A", 10);
+map.putIfAbsent("taskA", 1);
 ```
 
-Important: A thread-safe map doesn't automatically make a sequence of separate map operations atomic.
+## 4. Atomic Check-and-Insert
 
-## 3. MongoDB Crawler — Atomic Visited Set
+Suppose two threads discover the same task.
 
 Unsafe:
 
 ```java
-if (!visited.contains(url)) {
-    visited.add(url);
-    submit(url);
+if (!visited.contains(taskId)) {
+    visited.add(taskId);
+    process(taskId);
 }
 ```
 
-Two threads might both see the URL as absent.
+Both threads might observe that the task is absent.
 
 Safe:
 
@@ -51,71 +59,77 @@ Safe:
 Set<String> visited =
     ConcurrentHashMap.newKeySet();
 
-if (visited.add(url)) {
-    submit(url);
+if (visited.add(taskId)) {
+    process(taskId);
 }
 ```
+
+The concurrent set's `add()` operation is atomic.
 
 ### Example
 
-| Thread 1 | Thread 2 | visited |
+| Thread 1 | Thread 2 | Shared Set |
 |---|---|---|
-| Discovers D | Discovers D | {A,B,C} |
-| add(D) = true | — | {A,B,C,D} |
-| Schedules D | add(D) = false | {A,B,C,D} |
+| Discovers task D | Discovers task D | {A,B,C} |
+| add(D) returns true | — | {A,B,C,D} |
+| Processes D | add(D) returns false | {A,B,C,D} |
 | — | Skips D | {A,B,C,D} |
 
-## 4. AtomicInteger
+## 5. AtomicInteger
+
+Useful for safely updating a shared counter.
 
 ```java
-AtomicInteger outstanding =
-    new AtomicInteger();
+AtomicInteger activeTasks = new AtomicInteger();
 
-outstanding.incrementAndGet();
+activeTasks.incrementAndGet();
 
-if (outstanding.decrementAndGet() == 0) {
-    // Last outstanding task finished
-}
+// When a task finishes:
+int remaining = activeTasks.decrementAndGet();
 ```
 
-## 5. CountDownLatch
+Unlike `count++`, incrementAndGet() is atomic.
 
-Used when a thread needs to wait for a known number of events.
+## 6. CountDownLatch
+
+Allows a thread to wait for a known number of completion events.
 
 ```java
-CountDownLatch latch =
-    new CountDownLatch(3);
+CountDownLatch done = new CountDownLatch(3);
 
-// Worker:
-latch.countDown();
+// Each completed worker:
+done.countDown();
 
-// Main:
-latch.await();
+// Coordinator:
+done.await();
 ```
 
-It is a one-shot latch.
+The latch is one-shot and cannot be reset.
 
-For dynamically generated tasks, a known fixed task count may not be available. Use an appropriate completion protocol.
+For dynamically discovered work, a fixed CountDownLatch alone may not be sufficient; a separate task-completion protocol may be required.
 
-## 6. Semaphore
+## 7. Semaphore
 
-Limits simultaneous permit holders.
+Limits the number of threads allowed to perform a particular operation simultaneously.
 
 ```java
 Semaphore semaphore = new Semaphore(3);
 
 semaphore.acquire();
+
 try {
-    // At most 3 permit holders here
+    performOperation();
 } finally {
     semaphore.release();
 }
 ```
 
-A Semaphore is not automatically a per-second rate limiter.
+Only three permits can be held simultaneously.
+
+A Semaphore limits concurrency, not automatically requests per second.
 
 ## Interview Explanation
 
-"I use concurrent collections when multiple threads share data. For atomic check-and-insert, I'd use operations like ConcurrentHashMap.newKeySet().add(). For task counters, I'd use AtomicInteger, and for completion coordination I'd use CountDownLatch."
+"I use concurrent collections when threads share mutable data. For duplicate prevention, I prefer atomic operations such as ConcurrentHashMap.newKeySet().add(). For counters, I use AtomicInteger. For coordinating completion or limiting concurrency, I use CountDownLatch or Semaphore."
 
-[Next: Discord TCP](07-discord-tcp.md)
+[Next: Multithreaded Server](07-multithreaded-server.md)
